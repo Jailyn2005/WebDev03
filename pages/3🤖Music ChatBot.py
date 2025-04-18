@@ -24,9 +24,10 @@ def get_spotify_token():
         "grant_type": "client_credentials"
     }
     response = requests.post(auth_url, headers=headers, data=data)
-    return response.json().get("access_token")
+    token = response.json().get("access_token")
+    return token
 
-# ---- Helper: Get Track Features with Debug Info ----
+# ---- Helper: Get Track Features ----
 def get_track_features(song_name):
     token = get_spotify_token()
     if not token:
@@ -51,18 +52,15 @@ def get_track_features(song_name):
     audio_response = requests.get(audio_url, headers=headers)
     audio_features = audio_response.json()
 
-    # Debug print to Streamlit
-    st.write("🔍 Raw audio features response:", audio_features)
-
-    if not audio_features or not isinstance(audio_features, dict) or audio_features.get("valence") is None:
+    if not audio_features or audio_features.get("valence") is None:
         return {
             "name": track["name"],
             "artist": track["artists"][0]["name"],
             "valence": None,
+        "error": "403"
             "energy": None,
             "danceability": None,
-            "tempo": None,
-            "raw_audio": audio_features  # keep for debug
+            "tempo": None
         }
 
     return {
@@ -146,7 +144,7 @@ if song_query:
                     st.metric("🕺 Danceability", f"{song_data['danceability']*100:.1f}%", help="How danceable it is")
                     st.metric("🎵 Tempo", f"{song_data['tempo']} BPM", help="Beats per minute")
             else:
-                st.warning("⚠️ Spotify found this track, but didn’t return vibe data. This may happen for new releases or rate limits. Try a different song!")
+                st.warning("⚠️ Sorry! Spotify doesn’t have vibe data for this track yet. Try another song!")
 
             st.markdown("---")
             st.subheader("💡 Ask DJ Vibez a Question")
